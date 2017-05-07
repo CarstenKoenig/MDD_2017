@@ -22,11 +22,62 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 
 ### Agenda
 
+- Funktionales in C#
 - Was sind Parser
 - *funktionale* Parser-Kombinatoren in C#
 - Beispiel Taschenrechner `2 * 3 + 4` -> `= 10`
 
 ' Speakernotes here please
+
+***
+
+### Funktionales in C#
+
+- C# *war* schon immer eine funktionale Sprache
+- funktionale Aspekte werden *ständig* ausgebaut
+
+
+---
+
+### "erste Klasse" Funktionen
+
+`delegate`
+
+---
+
+### C# 2
+
+- annonyme Delegaten
+- *method group conversions*
+
+---
+
+### C# 3
+
+- Lambdas
+- *query expressions* 
+- LINQ
+
+---
+
+### C# 5
+
+`async`
+
+---
+
+### C# 6
+
+*null conditional operators*
+
+---
+
+### C# 7
+
+- lokale Funktionen
+- *pattern matching*
+- Tuples
+- *deconstruction* 
 
 ***
 
