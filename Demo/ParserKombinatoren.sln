@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserKombinatoren", "src\ParserKombinatoren\ParserKombinatoren.csproj", "{2B4DE538-3E1E-4C0D-91E4-E62225AACF25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.ParserKombinatoren", "test\Tests.ParserKombinatoren\Tests.ParserKombinatoren.csproj", "{E13C087B-E4F4-4944-A9A4-CA4270551C3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserKombinatoren.Taschenrechner", "src\ParserKombinatoren.Taschenrechner\ParserKombinatoren.Taschenrechner.csproj", "{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserKombinatoren.Console", "src\ParserKombinatoren.Console\ParserKombinatoren.Console.csproj", "{FF0338B7-4DFF-4FA3-9F59-72BB43C36413}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{97DEDBC4-9647-4067-A0EB-6E533ABCDBEE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{5A38926A-5E6D-49B1-9B60-520185076D71}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{2B598B61-9A46-4228-8633-7609CBEF47B3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B4DE538-3E1E-4C0D-91E4-E62225AACF25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B4DE538-3E1E-4C0D-91E4-E62225AACF25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B4DE538-3E1E-4C0D-91E4-E62225AACF25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B4DE538-3E1E-4C0D-91E4-E62225AACF25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E13C087B-E4F4-4944-A9A4-CA4270551C3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E13C087B-E4F4-4944-A9A4-CA4270551C3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E13C087B-E4F4-4944-A9A4-CA4270551C3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E13C087B-E4F4-4944-A9A4-CA4270551C3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF0338B7-4DFF-4FA3-9F59-72BB43C36413}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF0338B7-4DFF-4FA3-9F59-72BB43C36413}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF0338B7-4DFF-4FA3-9F59-72BB43C36413}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF0338B7-4DFF-4FA3-9F59-72BB43C36413}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2B4DE538-3E1E-4C0D-91E4-E62225AACF25} = {97DEDBC4-9647-4067-A0EB-6E533ABCDBEE}
+		{E13C087B-E4F4-4944-A9A4-CA4270551C3E} = {2B598B61-9A46-4228-8633-7609CBEF47B3}
+		{1DF29816-A6D8-4A6F-9431-EB1886FC6FD9} = {5A38926A-5E6D-49B1-9B60-520185076D71}
+		{FF0338B7-4DFF-4FA3-9F59-72BB43C36413} = {5A38926A-5E6D-49B1-9B60-520185076D71}
+	EndGlobalSection
+EndGlobal
