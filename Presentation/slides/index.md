@@ -22,6 +22,12 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 
 ### Agenda
 
+- Was sind Parser
+- *funktionale* Parser-Kombinatoren in C#
+- Beispiel Taschenrechner `2 * 3 + 4` -> `= 10`
+
+' Speakernotes here please
+
 ***
 
 ### Was ist ein Parser?
@@ -32,7 +38,10 @@ ein **Parser** versucht eine *Eingabe* in eine für die Weiterverarbeitung geeig
 ---
 
 #### Beispiel
-Analysieren von *Quelltext* in einen **Syntaxbaum**.
+
+Eingabe: **Quelltext**
+
+Ausgabe: **Syntaxbaum**
 
 ---
 
@@ -48,10 +57,29 @@ Analysieren von *Quelltext* in einen **Syntaxbaum**.
 
 ---
 
-### Compiler-Compiler
+### manuell
 
-häufig von Tools wie [YACC](https://de.wikipedia.org/wiki/Yacc) oder [ANTLR](https://de.wikipedia.org/wiki/ANTLR)
-erzeugt.
+einfache Parser direkt durch Funktionen implementieren (siehe [wikipedia](https://en.wikipedia.org/wiki/Recursive_descent_parser#C_implementation))
+
+```c
+void term(void) {
+    factor();
+    while (sym == times || sym == slash) {
+        nextsym();
+        factor();
+    }
+}
+
+void expression(void) {
+    if (sym == plus || sym == minus)
+        nextsym();
+    term();
+    while (sym == plus || sym == minus) {
+        nextsym();
+        term();
+    }
+}
+```
 
 ---
 
@@ -69,25 +97,28 @@ mulop  ::= * | /
 
 in eine *state-machine* in der *Zielsprache*
 
+---
+
+### Compiler-Compiler
+
+- [YACC](https://de.wikipedia.org/wiki/Yacc) 
+- [ANTLR](https://de.wikipedia.org/wiki/ANTLR)
+
 ***
 
 ### funktionaler Parser
 
-> **Idee:** funktionale Umsetzung als *parser combinator*
+> Umsetzung als *parser combinator* Bibliothek
 
 ---
 
 ### funktionaler Parser
 
-> **Idee:** funktionale Umsetzung als *parser combinator*
+#### Kombinator?
 
-*Funktionen* die *Parser* auf neue *Parsern* abbilden.
+![Lego](images/Lego.png)
 
----
-
-#### Dazu
-
-- *Parser* als **Datenstruktur** darstellen
+*Funktionen* die *Parser* zu neuen *Parser*n zusammensetzen
 
 ---
 
@@ -98,21 +129,23 @@ in eine *state-machine* in der *Zielsprache*
 
 ***
 
-### Parser
+## Parser
+
+### Bausteine
+
+---
+
+### was ist ein Parser-Baustein?
 
 *sieht* die **Eingabetoken** und *berechnet* einen **Ausgabewert**
 
 ---
 
-#### **soll** kombinbar sein
+#### soll kombinbar sein
 
 **⟹** erkennt / *konsumiert* vielleicht nur einen Teil der Eingabe
 
----
-
-#### deswegen
-
-*Rückgabe* des Parsers soll den Rest der *Eingabe* enthalten
+**⟹** *Rückgabe* des Parsers soll den Rest der *Eingabe* anzeigen
 
 ---
 
@@ -173,7 +206,7 @@ zumindest mit *Resharper* und C# 6 (`?.`,`??`, ...) **ok**
 
 #### ParserResult
 
-*OOP* Version eines **Co-Produkts**
+*OOP* Version eines **Co**-*Produkts*
 
 ```csharp
 abstract class ParserResult<T>
@@ -189,6 +222,10 @@ abstract class ParserResult<T>
 }
 
 ```
+
+' - ein **Produkt** ist ein Tupel, Record, ...
+' - also ein Wert A **und** ein Wert B, ...
+' - ein Coprodukt/SumType/... ist ein **Entweder-Oder**
 
 ---
 
@@ -214,7 +251,7 @@ abstract class ParserResult<T>
          }
 ```
 
-**Vorteil:** *total* (nicht partiell) - kann keinen *Fall* vergessen.
+' **Vorteil:** *total* (nicht partiell) - kann keinen *Fall* vergessen.
 
 ---
 
@@ -247,9 +284,33 @@ abstract class ParserResult<T>
     }
 ```
 
+---
+
+### Funktor Gesetze
+
+muss eine Reihe *Gesetze* erfüllen:
+
+- `result.Map(x => x)` ist das Gleiche wie `result`
+- `result.Map(x => g(f(x)))` ist das Gleiche wie `result.Map(f).Map(g)`
+
+---
+
+#### weitere Beispiele
+
+- `IEnumerable<T>` (mit `Enumerable.Select`)
+- `Task<T>` mit
+
+```csharp
+async Task<TRes> Map<T,TRes>(Task<T> task, Func<T,TRes> map)
+{
+    var result = await task;
+    return map(result);
+}
+``` 
+
 ***
 
-### parsen
+### Parser benutzen
 
 Wie bekomme ich das `ParserResult` zu einem *Eingabestring*?
 
@@ -290,7 +351,11 @@ public static T Parse<T>(this Parser<T> parser, string text)
 
 ***
 
-### Kombinatoren
+### Parser kombinieren
+
+---
+
+#### Erinnerung: Kombinator
 
 > Funktionen,
 >
@@ -320,6 +385,27 @@ Parser<T> Fail<T>(string error)
 
 ---
 
+#### einzelnes Zeichen
+
+```csharp
+Parser<char> SingleChar()
+{
+    return pos =>
+    {
+        if (!pos.CurrentChar.HasValue)
+            return ParserResult<char>
+               .Failed("Unerwartetes Ende der Eingabe", pos);
+
+        var zeichen = pos.CurrentChar.Value;
+        return ParserResult.Succeed(zeichen, pos.Next());
+    };
+}
+```
+
+**bitte beachten**: hier wir die Position vorgerrückt
+
+---
+
 #### ein Zeichen parsen, dass eine Eigenschaft erfüllt
 
 ```csharp
@@ -342,8 +428,6 @@ Parser<char> Satisfy(Func<char, bool> property)
 }
 ```
 
-**bitte beachten**: hier wir die Position vorgerrückt
-
 ---
 
 #### Funktor
@@ -357,12 +441,9 @@ Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
 }
 
 ```
-
 ---
 
-#### Funktor
-
-**erbt** die Funktor-Eigenschaft von `ParserResult`
+#### erbt?
 
 - `ParserResult<_>` ist ein Funktor
 - `Func<T, _>` ist ein **Funktor**
@@ -381,7 +462,7 @@ Func<T,Tb> Map<T,Ta,Tb>(Func<T,Ta> f, Func<Ta,Tb> map)
 ```
 ---
 
-#### Entweder-Oder
+### Entweder-Oder Kombinator
 
 **Idee:** versuche einen Parser, falls dieser
 erfolgreich ist verwende dessen Ergebnis
@@ -401,7 +482,7 @@ Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
 
 ---
 
-#### nacheinander parsen
+### nacheinander parsen
 
 **Idee:** die *Position* nach dem Parsen des **ersten**,
 als Eingabe für den **zweiten** Parser nutzen.
@@ -455,9 +536,12 @@ Parser<TRes> Bind<T, TRes>(
         );
 }
 ```
+
+' gibt auch einige Gesetze - heute **ignorieren**
+
 ---
 
-#### mehrfach benutzen
+### Many Kombinator
 
 ```csharp
 Parser<IEnumerable<T>> Many<T>(this Parser<T> parser)
@@ -475,7 +559,7 @@ Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
 }
 ```
 
-**Nachteil:** Schachtelung, zuviel *buzz*
+' **Nachteil:** Schachtelung, zuviel *buzz*
 
 ---
 
@@ -521,7 +605,7 @@ Parser<TRes> SelectMany<TSrc, TCol, TRes>(
 
 ---
 
-#### Chains
+### Chains
 
 **Ziel:** Eingaben der Form
 
@@ -560,13 +644,28 @@ Parser<T> Chainl1<T>(this Parser<T> elemParser, Parser<Func<T, T, T>> opParser)
 
 ***
 
-### Taschenrechner
+## Taschenrechner
 
 ---
 
-#### Grammatik
+## DEMO
 
-wir wollen folgende Grammatik parsen:
+```
+> 2 * 3 + 4
+10
+```
+
+---
+
+### Erinnerung
+
+![Expression](images/SyntaxBaum.png)
+
+---
+
+### Grammatik
+
+wollen folgende Grammatik parsen:
 
 ```
 expr   ::= expr addop term | term
@@ -577,7 +676,6 @@ digit  ::= (0 | 1 | . . . | 9)*
 addop  ::= + | -
 mulop  ::= * | /
 ```
-
 --- 
 
 ### Tokens
@@ -589,6 +687,7 @@ int    ::= - digits | digits
 digit  ::= (0 | 1 | . . . | 9)*
 ```
 
+---
 
 #### Symbol
 
@@ -626,7 +725,7 @@ Parser<string> _whitespace = Parsers
 
 ---
 
-#### Zahl
+### Ganzzahl Parser
 
 ```csharp
 Parser<int> Int { get {
@@ -712,44 +811,30 @@ Parser<int> Factor
             .ErrorText("( oder Ganzzahl erwartet");
     }
 }
-
 ```
 
----
-
-## DEMO
-
-```
-> 2 * 3 + 4
-10
-```
+' **Vorsicht** das Funktioniert nur weil *LINQ* hier
+' über einen Expression-Tree arbeitet - sonst gäbe
+' Expression direkt einen StackOverflowException
 
 ***
 
 ### Blick über den Tellerrand
 
-F#:
+- F#: [FParsec](http://www.quanttec.com/fparsec/)
+- Elm (`bind` = `andThen`):
+    - Parser [elm-combine](http://package.elm-lang.org/packages/Bogdanp/elm-combine/latest)
+    - Json [Decoder](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Json-Decode)/Encoder
+    - [Random](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Random)
 
-- FParsec
+***
 
-In Elm:
+### Referenzen
 
-- Parser
-- Json Decoder/Encoder
-- Random
+- G. Hutton, E. Meijer [Monadic Parsing in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pearl.pdf)
+- G. Hutton, E. Meijer [Monadic Parser Combinators](http://www.cs.nott.ac.uk/~pszgmh/monparsing.pdf)
 
-etc.
+***
 
-### Show me the code
+# Thank you!
 
-*** 
-
-### TakeAways
-
-* C# kann auch FP
-
-*** 
-
-### Thank you!
-
-* put something here
