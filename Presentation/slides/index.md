@@ -442,6 +442,10 @@ Parser<char> SingleChar()
 
 #### ein Zeichen parsen, dass eine Eigenschaft erfüllt
 
+![satisfy parser](images/Satisfy.png)
+
+---
+
 ```csharp
 
 Parser<char> Satisfy(Func<char, bool> property)
@@ -787,6 +791,10 @@ Parser<string> _whitespace = Parsers
 
 ### Ganzzahl Parser
 
+![int parser](images/IntParser.png)
+
+---
+
 ```csharp
 Parser<int> Int { get {
 
@@ -814,7 +822,11 @@ Parser<int> Int { get {
 
 #### MulOp / AddOp
 
+![mulop parser](images/MulOp.png)
+
 über `Choice` und `Symbol`
+
+---
 
 ```csharp
 Parser<Func<int, int, int>> MulOp
@@ -843,7 +855,10 @@ Parser<Func<int, int, int>> MulOp
     expr   ::= expr addop term | term
     term   ::= term mulop factor | factor
 
+![term parser](images/Term.png)
+
 ```csharp
+
 Parser<int> Expression => 
     Term.Chainl1(AddOp);
 
