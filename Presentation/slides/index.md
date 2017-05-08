@@ -39,45 +39,28 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 
 ---
 
-### "erste Klasse" Funktionen
+## Geschichte
 
-`delegate`
-
+- `delegate`
+- C# 2:
+    - annonyme Delegaten
+    - *method group conversions*
+- C# 3
+    - Lambdas
+    - *query expressions* 
+    - LINQ
+	
 ---
 
-### C# 2
+## Geschichte 2
 
-- annonyme Delegaten
-- *method group conversions*
-
----
-
-### C# 3
-
-- Lambdas
-- *query expressions* 
-- LINQ
-
----
-
-### C# 5
-
-`async`
-
----
-
-### C# 6
-
-*null conditional operators*
-
----
-
-### C# 7
-
-- lokale Funktionen
-- *pattern matching*
-- Tuples
-- *deconstruction* 
+- C# 6
+    - *null conditional operators*
+- C# 7
+    - lokale Funktionen
+    - *pattern matching*
+    - Tuples
+    - *deconstruction* 
 
 ***
 
@@ -481,7 +464,27 @@ Parser<char> Satisfy(Func<char, bool> property)
 
 ---
 
-#### Funktor
+### Entweder-Oder Kombinator
+
+**Idee:** versuche einen Parser, falls dieser
+erfolgreich ist verwende dessen Ergebnis
+
+**sonst** benutze einen *alternativen* Parser (hier *backtracking*)
+
+```csharp
+Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
+{
+    return pos => 
+	    parserA(pos).Match(
+            onSuccess: ParserResult<T>.Succeed,
+            onFailure: (err, _) => parserB(pos));
+}
+
+```
+
+***
+
+### Funktor
 
 **erbt** die Funktor-Eigenschaft von `ParserResult`
 
@@ -492,6 +495,7 @@ Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
 }
 
 ```
+
 ---
 
 #### erbt?
@@ -511,27 +515,8 @@ Func<T,Tb> Map<T,Ta,Tb>(Func<T,Ta> f, Func<Ta,Tb> map)
 }
 
 ```
----
 
-### Entweder-Oder Kombinator
-
-**Idee:** versuche einen Parser, falls dieser
-erfolgreich ist verwende dessen Ergebnis
-
-**sonst** benutze einen *alternativen* Parser (hier *backtracking*)
-
-```csharp
-Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
-{
-    return pos => 
-	    parserA(pos).Match(
-            onSuccess: ParserResult<T>.Succeed,
-            onFailure: (err, _) => parserB(pos));
-}
-
-```
-
----
+***
 
 ### nacheinander parsen
 
@@ -571,7 +556,7 @@ ParserPosition pos =>
 
 ---
 
-#### Monade
+### Monade
 
 ```csharp
 Parser<T> Return<T>(T value) {...}
@@ -590,7 +575,65 @@ Parser<TRes> Bind<T, TRes>(
 
 ' gibt auch einige Gesetze - heute **ignorieren**
 
+***
+
+### Apply Kombinator
+
+einen Parser, der eine **Funktion** zurückliefert mit einem Parser, der ein dazu
+passendes **Argument** liefert verknüpfen
+
 ---
+
+```csharp
+Parser<TRes> Apply<T, TRes>(
+    this Parser<Func<T, TRes>> fParser, 
+    Parser<T> valueParser)
+{
+    return 
+        fParser.Bind(f => 
+            valueParser.Map(x => f(x)));
+}
+
+```
+---
+
+[η-conversion](https://en.wikipedia.org/wiki/Lambda_calculus#.CE.B7-conversion)
+
+    x => f(x) == f
+	
+```csharp
+            valueParser.Map(x => f(x))
+=
+            valueParser.Map(f)
+```
+
+---
+
+```csharp
+Parser<TRes> Apply<T, TRes>(
+    this Parser<Func<T, TRes>> fParser, 
+    Parser<T> valueParser)
+{
+    return 
+        fParser.Bind(f => valueParser.Map(f));
+}
+
+```
+---
+
+nochmal Eta
+
+```csharp
+Parser<TRes> Apply<T, TRes>(
+     this Parser<Func<T, TRes>> fParser, 
+     Parser<T> valueParser)
+{
+    return fParser.Bind(valueParser.Map);
+}
+
+```
+
+***
 
 ### Many Kombinator
 
@@ -628,7 +671,9 @@ Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
 
 ---
 
-#### dafür
+### LINQ
+
+---
 
 ```csharp
 Parser<TRes> SelectMany<TSrc, TRes>(
@@ -637,8 +682,11 @@ Parser<TRes> SelectMany<TSrc, TRes>(
 {
     return source.Bind(selector);
 }
+```
 
+---
 
+```csharp
 Parser<TRes> SelectMany<TSrc, TCol, TRes>(
     this Parser<TSrc> source,
     Func<TSrc, Parser<TCol>> collectionSelector, 
@@ -651,45 +699,6 @@ Parser<TRes> SelectMany<TSrc, TCol, TRes>(
                 .Map(col => resultSelector(src, col)),
             onError: ParserResult<TRes>.Failed);
 
-}
-```
-
----
-
-### Chains
-
-**Ziel:** Eingaben der Form
-
-    element ° element ° ... ° element
-	
-parsen, wobei
-
-- `element` ein `Parser<T>`
-- der Operator `°` ein `Parser<Func<T,T,T>>`
-- Ergebnis den Operator-Wert *links-assoziativ* verknüpft wird `(element ° element) ° element`
-
----
-
-#### Chains
-
-```csharp
-Parser<T> Chainl1<T>(this Parser<T> elemParser, Parser<Func<T, T, T>> opParser)
-{
-    Parser<T> Rest(T a)
-    {
-        var more =
-            from f in opParser
-            from b in elemParser
-            from r in Rest(f(a, b))
-            select r;
-
-        return Choice(more, Return(a));
-    }
-
-    return
-        from x in elemParser
-        from y in Rest(x)
-        select y;
 }
 ```
 
@@ -868,6 +877,47 @@ Parser<int> Factor
 ' über einen Expression-Tree arbeitet - sonst gäbe
 ' Expression direkt einen StackOverflowException
 
+---
+
+### Chains
+
+**Ziel:** Eingaben der Form
+
+    element ° element ° ... ° element
+	
+parsen, wobei
+
+- `element` ein `Parser<T>`
+- der Operator `°` ein `Parser<Func<T,T,T>>`
+- Ergebnis den Operator-Wert *links-assoziativ* verknüpft wird `(element ° element) ° element`
+
+---
+
+#### Chains
+
+```csharp
+Parser<T> Chainl1<T>(
+    this Parser<T> elemParser, 
+    Parser<Func<T, T, T>> opParser)
+{
+    Parser<T> Rest(T a)
+    {
+        var more =
+            from f in opParser
+            from b in elemParser
+            from r in Rest(f(a, b))
+            select r;
+
+        return Choice(more, Return(a));
+    }
+
+    return
+        from x in elemParser
+        from y in Rest(x)
+        select y;
+}
+```
+
 ***
 
 ### Blick über den Tellerrand
@@ -884,6 +934,7 @@ Parser<int> Factor
 
 - G. Hutton, E. Meijer [Monadic Parsing in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pearl.pdf)
 - G. Hutton, E. Meijer [Monadic Parser Combinators](http://www.cs.nott.ac.uk/~pszgmh/monparsing.pdf)
+- fertige Implementation - Github: [Sprache](https://github.com/sprache/Sprache)
 
 ***
 
