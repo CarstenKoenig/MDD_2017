@@ -11,7 +11,7 @@
 <br />
 <br />
 
-#### am Beipspiel Parser-Kombinatoren
+### am Beipspiel Parser-Kombinatoren
 
 <br />
 <br />
@@ -22,7 +22,7 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 
 ### Agenda
 
-- Funktionales in C#
+- Funktionales C#
 - Was sind Parser
 - *funktionale* Parser-Kombinatoren in C#
 - Beispiel Taschenrechner `2 * 3 + 4` -> `= 10`
@@ -41,10 +41,27 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 
 ## Geschichte
 
-- `delegate`
+#### C# 1 delegate
+
+```csharp
+delegate int Arith(int a, int b);
+
+class Impl
+{
+	public static int Plus(int a, int b)
+	{ return a + b; }
+}
+
+Arith plus = Impl.Plus;
+```
+
+---
+
+## Geschichte 2
 - C# 2:
     - annonyme Delegaten
     - *method group conversions*
+	
 - C# 3
     - Lambdas
     - *query expressions* 
@@ -52,7 +69,7 @@ Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
 	
 ---
 
-## Geschichte 2
+## Geschichte 3
 
 - C# 6
     - *null conditional operators*
@@ -169,15 +186,15 @@ in eine *state-machine* in der *Zielsprache*
 
 ---
 
-### was ist ein Parser-Baustein?
+### was ist ein Parser?
 
-*sieht* die **Eingabetoken** und *berechnet* einen **Ausgabewert**
+*verarbeitet* **Eingabetoken** und *berechnet* einen **Ausgabewert**
 
 ---
 
 #### soll kombinbar sein
 
-**⟹** erkennt / *konsumiert* vielleicht nur einen Teil der Eingabe
+**⟹** verarbeitet/*konsumiert* vielleicht nur einen Teil der Eingabe
 
 **⟹** *Rückgabe* des Parsers soll den Rest der *Eingabe* anzeigen
 
@@ -186,12 +203,16 @@ in eine *state-machine* in der *Zielsprache*
 ### Definition Parser
 
 - bekommt als *Eingabe* eine **Position** innerhalb des *Quelltextes*
-- *Ausgabe* ist **neue** Position *zusammen* mit **erkannten Wert**
-
-
+- *Ausgabe* ist entweder
+    - **neue** Position *zusammen* mit **erkannten Wert**
+    - oder der Parser **schlägt fehl**
+	
 ---
 
-### in Code
+### Definition Parser
+
+![Parser](images/Parser.png)
+
 
 ```csharp
 delegate ParserResult<T> Parser<T>(ParserPosition position);
@@ -216,7 +237,7 @@ class ParserPosition
 
 ---
 
-### functional
+### funktional
 
 `ParsePosition` ist **immutable**
 
@@ -235,6 +256,9 @@ class ParserPosition
 ```
 
 zumindest mit *Resharper* und C# 6 (`?.`,`??`, ...) **ok**
+
+' FP mag NULL nicht
+' verwenden das hier nur intern
 
 ---
 
@@ -260,6 +284,7 @@ abstract class ParserResult<T>
 ' - ein **Produkt** ist ein Tupel, Record, ...
 ' - also ein Wert A **und** ein Wert B, ...
 ' - ein Coprodukt/SumType/... ist ein **Entweder-Oder**
+' - F# definiert das auch so
 
 ---
 
@@ -274,7 +299,6 @@ abstract class ParserResult<T>
 	...
 	
     class Success {
-
          private T Value { get; }
 	
          public override TRes Match<TRes> (
@@ -285,13 +309,15 @@ abstract class ParserResult<T>
          }
 ```
 
+' Funktionales Inversion of Control
+' anstatt Werte raus werden hier also die verarbeiteten Funktionen reingegeben
 ' **Vorteil:** *total* (nicht partiell) - kann keinen *Fall* vergessen.
 
 ---
 
 ### ParserResult ist ein Funktor
 
-**Beispiel**
+#### Beispiel
 
 ```csharp
 	ParserResult<string> textResult = ...
@@ -304,7 +330,7 @@ abstract class ParserResult<T>
 
 ---
 
-### ParserResult ist ein Funktor
+#### Implementation
 
 ```csharp
 abstract class ParserResult<T>
@@ -353,9 +379,7 @@ Wie bekomme ich das `ParserResult` zu einem *Eingabestring*?
 ### parsen
 
 ```csharp
-delegate ParserResult<T> Parser<T>(ParserPosition position);
-
-public static class ParserPosition
+public static class Parsers
 {
         public static TRes TryParse<T, TRes>(
             this Parser<T> parser, string text, 
@@ -368,6 +392,11 @@ public static class ParserPosition
                 result.Match((v, _) => onSuccess(v), onFailure);
         }
 ```
+
+' Idee analog `ParserResult.Match`
+' mit Extension-Methods
+' _ als *I don't care*
+
 ---
 
 ### Exception falls gescheitert
@@ -378,14 +407,14 @@ public static T Parse<T>(this Parser<T> parser, string text)
     return
         parser.TryParse(text,
             onSuccess: x => x,
-            onFailure: (err, p) => throw new Exception(err));
+            onFailure: (err, _) => throw new Exception(err));
 }
 
 ```
 
 ***
 
-### Parser kombinieren
+## Parser kombinieren
 
 ---
 
@@ -399,7 +428,7 @@ public static T Parse<T>(this Parser<T> parser, string text)
 
 ---
 
-#### einfache Kombinatoren
+#### primitive Kombinatoren
 
 ```csharp
 delegate ParserResult<T> Parser<T>(ParserPosition position);
@@ -416,6 +445,12 @@ Parser<T> Fail<T>(string error)
 }
 
 ```
+
+---
+
+#### einzelnes Zeichen
+
+![satisfy parser](images/SingleChar.png)
 
 ---
 
@@ -442,10 +477,6 @@ Parser<char> SingleChar()
 
 #### ein Zeichen parsen, dass eine Eigenschaft erfüllt
 
-![satisfy parser](images/Satisfy.png)
-
----
-
 ```csharp
 
 Parser<char> Satisfy(Func<char, bool> property)
@@ -466,6 +497,8 @@ Parser<char> Satisfy(Func<char, bool> property)
 }
 ```
 
+' nützlicher und natürlich kann `SingleChar` damit implementiert werden
+
 ---
 
 ### Entweder-Oder Kombinator
@@ -474,6 +507,28 @@ Parser<char> Satisfy(Func<char, bool> property)
 erfolgreich ist verwende dessen Ergebnis
 
 **sonst** benutze einen *alternativen* Parser (hier *backtracking*)
+
+---
+
+#### A ist erfolgreich
+
+![Choice A](images/ChoiceParserA.png)
+
+---
+
+#### B ist erfolgreich
+
+![Choice B](images/ChoiceParserB.png)
+
+---
+
+#### beide scheitern
+
+![Choice C](images/ChoiceParserC.png)
+
+---
+
+#### Implementation
 
 ```csharp
 Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
@@ -488,9 +543,21 @@ Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
 
 ***
 
+## komplexere Kombinatoren
+
+---
+
 ### Funktor
 
 **erbt** die Funktor-Eigenschaft von `ParserResult`
+
+---
+
+![Parser Funktor](images/ParserFunktor.png)
+
+---
+
+#### Implementation
 
 ```csharp
 Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
@@ -521,6 +588,10 @@ Func<T,Tb> Map<T,Ta,Tb>(Func<T,Ta> f, Func<Ta,Tb> map)
 ```
 
 ***
+
+## komplexere Kombinatoren
+
+---
 
 ### nacheinander parsen
 
@@ -553,18 +624,15 @@ ParserPosition pos =>
 {
     var result1 = parser1(pos);
     var parser2 = factory(result1.Wert);
-    var result2 = parser2(result1.Position);
-    ...
+    return parser2(result1.Position);
 }
 ```
 
 ---
 
-### Monade
+#### implementation
 
 ```csharp
-Parser<T> Return<T>(T value) {...}
-
 Parser<TRes> Bind<T, TRes>( 
        this Parser<T> parser, Func<T, 
        Parser<TRes>> bind)
@@ -577,9 +645,28 @@ Parser<TRes> Bind<T, TRes>(
 }
 ```
 
+---
+
+### a [*warm fuzzy thing*](https://www.urbandictionary.com/define.php?term=Warm%20Fuzzy%20Thing)
+
+```csharp
+Parser<T> Return<T>(T value) {...}
+
+Parser<TRes> Bind<T, TRes>( 
+       this Parser<T> parser, Func<T, 
+       Parser<TRes>> bind) { ... }
+```
+
+macht das den Parser zu einer **Monade**
+
+' nach Simon Peyton Jones
 ' gibt auch einige Gesetze - heute **ignorieren**
 
 ***
+
+## komplexere Kombinatoren
+
+---
 
 ### Apply Kombinator
 
@@ -639,7 +726,16 @@ Parser<TRes> Apply<T, TRes>(
 
 ***
 
+## komplexere Kombinatoren
+
+---
+
 ### Many Kombinator
+
+versucht einen *Parser* so oft wie möglich zu benutzen
+und liefert eine Sequenz (`IEnumerable<T>`) der Ergebnisse
+
+---
 
 ```csharp
 Parser<IEnumerable<T>> Many<T>(this Parser<T> parser)
@@ -675,7 +771,7 @@ Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
 
 ---
 
-### LINQ
+## LINQ
 
 ---
 
@@ -712,7 +808,7 @@ Parser<TRes> SelectMany<TSrc, TCol, TRes>(
 
 ---
 
-## DEMO
+### Ziel
 
 ```
 > 2 * 3 + 4
@@ -762,8 +858,7 @@ Parser<char> Symbol(char symbol)
 {
     return Parsers
         .Satisfy(c => symbol == c)
-        .IgnoreWhitespaceRight()
-        .ErrorText($"{symbol} erwartet");
+        .IgnoreWhitespaceRight();
 }
 ``` 
 
@@ -801,18 +896,17 @@ Parser<int> Int { get {
     var sign = Parsers
         .Choice(
             Symbol('-').Const<char, Func<int, int>>(x => -x),
-            Parsers.Return<Func<int, int>>(x => x))
-        .ErrorText("- oder Ziffer erwartet");
+            Parsers.Return<Func<int, int>>(x => x));
 
     var digits = Parsers
         .Satisfy(char.IsDigit)
         .Many1()
         .Map(ToString)
-        .Map(int.Parse)
-        .ErrorText("Ziffer erwartet");
+        .Map(int.Parse);
 		
-    return 
-        sign.Apply(digits).IgnoreWhitespaceRight();
+    return sign
+        .Apply(digits)
+        .IgnoreWhitespaceRight();
 		
     }
 }
@@ -823,8 +917,6 @@ Parser<int> Int { get {
 #### MulOp / AddOp
 
 ![mulop parser](images/MulOp.png)
-
-über `Choice` und `Symbol`
 
 ---
 
@@ -840,8 +932,7 @@ Parser<Func<int, int, int>> MulOp
                 Tokens.Symbol('*')
                    .Const<char, Func<int, int, int>>(mul),
                 Tokens.Symbol('/')
-                   .Const<char, Func<int, int, int>>(div)
-            ).ErrorText("* oder / erwartet");
+                   .Const<char, Func<int, int, int>>(div));
     }
 }
 
@@ -855,10 +946,9 @@ Parser<Func<int, int, int>> MulOp
     expr   ::= expr addop term | term
     term   ::= term mulop factor | factor
 
-![term parser](images/Term.png)
+---
 
 ```csharp
-
 Parser<int> Expression => 
     Term.Chainl1(AddOp);
 
@@ -867,34 +957,11 @@ Parser<int> Term =>
     Factor.Chainl1(MulOp);
 ```
 
----
-
-    factor ::= int | ( expr )
-
-```csharp
-Parser<int> Factor
-{
-    get
-    {
-        var inParents =
-                from l in Tokens.Symbol('(')
-                from i in Expression
-                from r in Tokens.Symbol(')')
-                select i;
-
-        return Choice(Tokens.Int, inParents)
-            .ErrorText("( oder Ganzzahl erwartet");
-    }
-}
-```
-
-' **Vorsicht** das Funktioniert nur weil *LINQ* hier
-' über einen Expression-Tree arbeitet - sonst gäbe
-' Expression direkt einen StackOverflowException
+![term parser](images/Term.png)
 
 ---
 
-### Chains
+### weiteren Kombinator
 
 **Ziel:** Eingaben der Form
 
@@ -908,7 +975,7 @@ parsen, wobei
 
 ---
 
-#### Chains
+#### Implementation
 
 ```csharp
 Parser<T> Chainl1<T>(
@@ -932,6 +999,31 @@ Parser<T> Chainl1<T>(
         select y;
 }
 ```
+---
+
+### letzter Baustein
+
+    factor ::= int | ( expr )
+
+```csharp
+Parser<int> Factor
+{
+    get
+    {
+        var inParents =
+                from l in Tokens.Symbol('(')
+                from i in Expression
+                from r in Tokens.Symbol(')')
+                select i;
+
+        return Choice(Tokens.Int, inParents);
+    }
+}
+```
+
+' **Vorsicht** das Funktioniert nur weil *LINQ* hier
+' über einen Expression-Tree arbeitet - sonst gäbe
+' Expression direkt einen StackOverflowException
 
 ***
 
