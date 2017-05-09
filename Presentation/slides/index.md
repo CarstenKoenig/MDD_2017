@@ -23,7 +23,7 @@ Carsten König
 
 ***
 
-### Agenda
+## Agenda
 
 - Funktionales C#
 - Was sind Parser
@@ -34,7 +34,7 @@ Carsten König
 
 ***
 
-### Funktionales in C#
+## Funktionales in C#
 
 - C# *war* schon immer eine funktionale Sprache
 - funktionale Aspekte werden *ständig* ausgebaut
@@ -84,18 +84,18 @@ Arith plus = Impl.Plus;
 
 ***
 
-## Parser
+# Parser
 
 ---
 
-### Was ist ein Parser?
+## Was ist ein Parser?
 
 ein **Parser** versucht eine *Eingabe* in eine für die Weiterverarbeitung geeignete
 *Ausgabe* umzuwandeln.
 
 ---
 
-#### Beispiel
+### Beispiel
 
 Eingabe: **Quelltext**
 
@@ -103,19 +103,19 @@ Ausgabe: **Syntaxbaum**
 
 ---
 
-##### von
+### von
 
 > 2 * 3 + 4
 
 ---
 
-##### 2 * 3 + 4
+### 2 * 3 + 4
 
 ![Syntaxbaum](./images/SyntaxBaum.png)
 
 ---
 
-### manuell
+## manuell
 
 einfache Parser direkt durch Funktionen implementieren (siehe [wikipedia](https://en.wikipedia.org/wiki/Recursive_descent_parser#C_implementation))
 
@@ -141,7 +141,7 @@ void expression(void) {
 
 ---
 
-### Compiler-Compiler (Grammatik)
+## Compiler-Compiler (Grammatik)
 
 übersetzen ein Grammatik wie
 
@@ -157,22 +157,22 @@ in eine *state-machine* in der *Zielsprache*
 
 ---
 
-### Compiler-Compiler
+## Compiler-Compiler
 
 - [YACC](https://de.wikipedia.org/wiki/Yacc) 
 - [ANTLR](https://de.wikipedia.org/wiki/ANTLR)
 
 ***
 
-### funktionaler Parser
+## funktionaler Parser
 
 > Umsetzung als *parser combinator* Bibliothek
 
 ---
 
-### funktionaler Parser
+## funktionaler Parser
 
-#### Kombinator?
+### Kombinator?
 
 ![Lego](images/Lego.png)
 
@@ -180,7 +180,7 @@ in eine *state-machine* in der *Zielsprache*
 
 ---
 
-#### Dazu
+## Dazu
 
 - Parser als Datenstruktur darstellen
 - *Kombinatoren* als **Funktionen** dieser Datenstrukturen schreiben
@@ -199,7 +199,7 @@ in eine *state-machine* in der *Zielsprache*
 
 ---
 
-#### soll kombinbar sein
+### soll kombinbar sein
 
 **⟹** verarbeitet/*konsumiert* vielleicht nur einen Teil der Eingabe
 
@@ -207,7 +207,7 @@ in eine *state-machine* in der *Zielsprache*
 
 ---
 
-### Definition Parser
+### etwas genauer
 
 - bekommt als *Eingabe* eine **Position** innerhalb des *Quelltextes*
 - *Ausgabe* ist entweder
@@ -269,7 +269,7 @@ zumindest mit *Resharper* und C# 6 (`?.`,`??`, ...) **ok**
 
 ---
 
-#### ParserResult
+### ParserResult
 
 *OOP* Version eines **Co**-*Produkts*
 
@@ -322,9 +322,9 @@ abstract class ParserResult<T>
 
 ---
 
-### ParserResult ist ein Funktor
+## ParserResult ist ein Funktor
 
-#### Beispiel
+### Beispiel
 
 ```csharp
 	ParserResult<string> textResult = ...
@@ -337,7 +337,7 @@ abstract class ParserResult<T>
 
 ---
 
-#### Implementation
+### Implementation
 
 ```csharp
 abstract class ParserResult<T>
@@ -362,7 +362,7 @@ muss eine Reihe *Gesetze* erfüllen:
 
 ---
 
-#### weitere Beispiele
+### weitere Beispiele
 
 - `IEnumerable<T>` (mit `Enumerable.Select`)
 - `Task<T>` mit
@@ -377,13 +377,13 @@ async Task<TRes> Map<T,TRes>(Task<T> task, Func<T,TRes> map)
 
 ***
 
-### Parser benutzen
+## Parser benutzen
 
 Wie bekomme ich das `ParserResult` zu einem *Eingabestring*?
 
 ---
 
-### parsen
+## parsen
 
 ```csharp
 public static class Parsers
@@ -421,11 +421,11 @@ public static T Parse<T>(this Parser<T> parser, string text)
 
 ***
 
-## Parser kombinieren
+# Parser kombinieren
 
 ---
 
-#### Erinnerung: Kombinator
+## Erinnerung: Kombinator
 
 > Funktionen,
 >
@@ -435,7 +435,7 @@ public static T Parse<T>(this Parser<T> parser, string text)
 
 ---
 
-#### primitive Kombinatoren
+## primitive Kombinatoren
 
 ```csharp
 delegate ParserResult<T> Parser<T>(ParserPosition position);
@@ -455,13 +455,13 @@ Parser<T> Fail<T>(string error)
 
 ---
 
-#### einzelnes Zeichen
+## einzelnes Zeichen
 
 ![satisfy parser](images/SingleChar.png)
 
 ---
 
-#### einzelnes Zeichen
+### einzelnes Zeichen
 
 ```csharp
 Parser<char> SingleChar()
@@ -482,7 +482,7 @@ Parser<char> SingleChar()
 
 ---
 
-#### ein Zeichen parsen, dass eine Eigenschaft erfüllt
+### ein Zeichen parsen, dass eine Eigenschaft erfüllt
 
 ```csharp
 
@@ -508,7 +508,7 @@ Parser<char> Satisfy(Func<char, bool> property)
 
 ---
 
-### Entweder-Oder Kombinator
+## Entweder-Oder Kombinator
 
 **Idee:** versuche einen Parser, falls dieser
 erfolgreich ist verwende dessen Ergebnis
@@ -517,25 +517,25 @@ erfolgreich ist verwende dessen Ergebnis
 
 ---
 
-#### A ist erfolgreich
+### A ist erfolgreich
 
 ![Choice A](images/ChoiceParserA.png)
 
 ---
 
-#### B ist erfolgreich
+### B ist erfolgreich
 
 ![Choice B](images/ChoiceParserB.png)
 
 ---
 
-#### beide scheitern
+### beide scheitern
 
 ![Choice C](images/ChoiceParserC.png)
 
 ---
 
-#### Implementation
+### Implementation
 
 ```csharp
 Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
@@ -550,11 +550,7 @@ Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
 
 ***
 
-## komplexere Kombinatoren
-
----
-
-### Funktor
+## Funktor
 
 **erbt** die Funktor-Eigenschaft von `ParserResult`
 
@@ -564,7 +560,7 @@ Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
 
 ---
 
-#### Implementation
+### Implementation
 
 ```csharp
 Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
@@ -576,7 +572,7 @@ Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
 
 ---
 
-#### erbt?
+### erbt?
 
 - `ParserResult<_>` ist ein Funktor
 - `Func<T, _>` ist ein **Funktor**
@@ -596,14 +592,12 @@ Func<T,Tb> Map<T,Ta,Tb>(Func<T,Ta> f, Func<Ta,Tb> map)
 
 ***
 
-## komplexere Kombinatoren
-
----
-
-### nacheinander parsen
+## nacheinander parsen
 
 **Idee:** die *Position* nach dem Parsen des **ersten**,
 als Eingabe für den **zweiten** Parser nutzen.
+
+---
 
 ```csharp
 // pseudo
@@ -619,7 +613,7 @@ ParserPosition pos =>
 
 ---
 
-#### Parser - *Factory*
+### Parser - *Factory*
 
 nicht *einfach* zweiter Parser **sondern** 
 
@@ -637,7 +631,7 @@ ParserPosition pos =>
 
 ---
 
-#### implementation
+### Implementation
 
 ```csharp
 Parser<TRes> Bind<T, TRes>( 
@@ -671,11 +665,7 @@ macht das den Parser zu einer **Monade**
 
 ***
 
-## komplexere Kombinatoren
-
----
-
-### Apply Kombinator
+## Apply Kombinator
 
 einen Parser, der eine **Funktion** zurückliefert mit einem Parser, der ein dazu
 passendes **Argument** liefert verknüpfen
@@ -733,11 +723,7 @@ Parser<TRes> Apply<T, TRes>(
 
 ***
 
-## komplexere Kombinatoren
-
----
-
-### Many Kombinator
+## Many Kombinator
 
 versucht einen *Parser* so oft wie möglich zu benutzen
 und liefert eine Sequenz (`IEnumerable<T>`) der Ergebnisse
@@ -764,7 +750,7 @@ Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
 
 ---
 
-#### wäre schöner
+### wäre schöner
 
 ```csharp
 Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
@@ -811,26 +797,22 @@ Parser<TRes> SelectMany<TSrc, TCol, TRes>(
 
 ***
 
-## Taschenrechner
+# Taschenrechner
 
 ---
 
-### Ziel
+## Ziel
 
 ```
 > 2 * 3 + 4
 10
 ```
 
----
-
-### Erinnerung
-
 ![Expression](images/SyntaxBaum.png)
 
 ---
 
-### Grammatik
+## Grammatik
 
 wollen folgende Grammatik parsen:
 
@@ -845,7 +827,7 @@ mulop  ::= * | /
 ```
 --- 
 
-### Tokens
+## Tokens
 
 ```
 addop  ::= + | -
@@ -856,7 +838,7 @@ digit  ::= (0 | 1 | . . . | 9)*
 
 ---
 
-#### Symbol
+### Symbol
 
 parst genau ein Zeichen und ignoriert *whitespace* dahinter
 
@@ -921,7 +903,7 @@ Parser<int> Int { get {
 
 ---
 
-#### MulOp / AddOp
+### MulOp / AddOp
 
 ![mulop parser](images/MulOp.png)
 
@@ -945,7 +927,7 @@ Parser<Func<int, int, int>> MulOp
 
 ---
 
-### Syntax
+## Syntax
 
 
     expr   ::= expr addop term | term
@@ -980,7 +962,7 @@ parsen, wobei
 
 ---
 
-#### Implementation
+### Implementation
 
 ```csharp
 Parser<T> Chainl1<T>(
@@ -1032,7 +1014,7 @@ Parser<int> Factor
 
 ***
 
-### Blick über den Tellerrand
+## Blick über den Tellerrand
 
 - F#: [FParsec](http://www.quanttec.com/fparsec/)
 - Elm (`bind` = `andThen`):
@@ -1042,7 +1024,7 @@ Parser<int> Factor
 
 ***
 
-### Referenzen
+## Referenzen
 
 - G. Hutton, E. Meijer [Monadic Parsing in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pearl.pdf)
 - G. Hutton, E. Meijer [Monadic Parser Combinators](http://www.cs.nott.ac.uk/~pszgmh/monparsing.pdf)
