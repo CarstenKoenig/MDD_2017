@@ -14,34 +14,8 @@ namespace ParserKombinatoren
 
     public static class Parsers
     {
-        public static Parser<T> ErrorText<T>(this Parser<T> parser, string error)
-        {
-            return pos => parser(pos).OverwriteError(error);
-        }
 
-        public static string PrettyPrintError(string error, ParserPosition atPosition)
-        {
-            var left = atPosition.Index > 3
-                ? "..." + atPosition.Text.Substring(atPosition.Index - 3).TakeMax(30)
-                : atPosition.Text.TakeMax(30);
-
-            var indentLen = atPosition.Index > 3
-                ? 6
-                : atPosition.Index;
-
-            var indent =
-                new string(Enumerable.Repeat(' ', indentLen).ToArray());
-
-            return left + "\n" + indent + "^ " + error;
-        }
-
-
-        public static Parser<Unit> EndOfInput()
-        {
-            return pos => pos.IsEndOfInput
-                ? ParserResult<Unit>.Succeed(Unit.unit, pos)
-                : ParserResult<Unit>.Failed("Ende des Inputs erwartet", pos);
-        }
+        // ********************* Parsen *****************
 
         public static T Parse<T>(this Parser<T> parser, string text)
         {
@@ -53,13 +27,13 @@ namespace ParserKombinatoren
         }
 
         public static TRes TryParse<T, TRes>(
-            this Parser<T> parser, string text, 
+            this Parser<T> parser, string text,
             Func<T, TRes> onSuccess,
             Func<string, ParserPosition, TRes> onError)
         {
             var start = ParserPosition.StarteMit(text);
             var result = parser(start);
-            return 
+            return
                 result.Match((v, _) => onSuccess(v), onError);
         }
 
@@ -78,63 +52,42 @@ namespace ParserKombinatoren
                 });
         }
 
-
-        public static Parser<T> Fail<T>(string error)
-        {
-            return pos => ParserResult<T>.Failed(error, pos);
-        }
+        // ************************ primitive Parser **************************
 
         public static Parser<T> Return<T>(T value)
         {
             return pos => ParserResult<T>.Succeed(value, pos);
         }
 
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
+        public static Parser<T> Fail<T>(string error)
         {
-            return pos => parser(pos).Map(map);
+            return pos => ParserResult<T>.Failed(error, pos);
         }
 
-        public static Parser<TRes> Const<T, TRes>(this Parser<T> parser, TRes constVal)
+        public static Parser<char> Satisfy(Func<char, bool> property)
         {
-            return parser.Map(_ => constVal);
+            return pos =>
+            {
+                if (!pos.CurrentChar.HasValue)
+                    return ParserResult<char>.Failed("Unerwartetes Ende der Eingabe", pos);
+
+                var zeichen = pos.CurrentChar.Value;
+
+                return !property(zeichen)
+                    ? ParserResult<char>.Failed($"Zeichen [{zeichen}] erfüllt Bedingung nicht", pos)
+                    : ParserResult<char>.Succeed(zeichen, pos.Next());
+            };
         }
 
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static Parser<TRes> Bind<T, TRes>(this Parser<T> parser, Func<T, Parser<TRes>> bind)
+        public static Parser<Unit> EndOfInput()
         {
-            return pos => parser(pos)
-                .Match(
-                    (v, p) => bind(v)(p),
-                    ParserResult<TRes>.Failed
-                );
+            return pos => pos.IsEndOfInput
+                ? ParserResult<Unit>.Succeed(Unit.unit, pos)
+                : ParserResult<Unit>.Failed("Ende des Inputs erwartet", pos);
         }
 
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static Parser<TRes> SelectMany<TSrc, TRes>(this Parser<TSrc> source, Func<TSrc, Parser<TRes>> selector)
-        {
-            return source.Bind(selector);
-        }
+        // ****************************** Kombinatoren*************************
 
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static Parser<TRes> SelectMany<TSrc, TCol, TRes>(this Parser<TSrc> source,
-            Func<TSrc, Parser<TCol>> collectionSelector, Func<TSrc, TCol, TRes> resultSelector)
-        {
-            return pos => source(pos)
-                .Match(
-                    (src, p) => collectionSelector(src)(p).Map(col => resultSelector(src, col))
-                    , ParserResult<TRes>.Failed);
-
-        }
-
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static Parser<TRes> Apply<T, TRes>(this Parser<Func<T, TRes>> fParser, Parser<T> valueParser)
-        {
-            return fParser.Bind(valueParser.Map);
-        }
-
-
-        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
         {
             return pos => parserA(pos)
@@ -151,10 +104,10 @@ namespace ParserKombinatoren
 
         public static Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
         {
-            return 
+            return
                 from item in parser
                 from items in Many(parser)
-                select new[] {item}.Concat(items);
+                select new[] { item }.Concat(items);
         }
 
         public static Parser<T> Chainl1<T>(this Parser<T> elemParser, Parser<Func<T, T, T>> opParser)
@@ -177,36 +130,74 @@ namespace ParserKombinatoren
 
         }
 
-        public static Parser<char> Satisfy(Func<char, bool> property)
+        // *************************** Hilffunktionen *************************
+
+        public static string PrettyPrintError(string error, ParserPosition atPosition)
         {
-            return pos =>
-            {
-                if (!pos.CurrentChar.HasValue)
-                    return ParserResult<char>.Failed("Unerwartetes Ende der Eingabe", pos);
+            var left = atPosition.Index > 3
+                ? "..." + atPosition.Text.Substring(atPosition.Index - 3).TakeMax(30)
+                : atPosition.Text.TakeMax(30);
 
-                var zeichen = pos.CurrentChar.Value;
+            var indentLen = atPosition.Index > 3
+                ? 6
+                : atPosition.Index;
 
-                return !property(zeichen)
-                    ? ParserResult<char>.Failed($"Zeichen [{zeichen}] erfüllt Bedingung nicht", pos)
-                    : ParserResult<char>.Succeed(zeichen, pos.Next());
-            };
-        }
-    }
+            var indent =
+                new string(Enumerable.Repeat(' ', indentLen).ToArray());
 
-    public class Unit
-    {
-        private Unit()
-        {
-
+            return left + "\n" + indent + "^ " + error;
         }
 
-        static Unit()
+        public static Parser<T> ErrorText<T>(this Parser<T> parser, string error)
         {
-            _unit = new Unit();
+            return pos => parser(pos).OverwriteError(error);
         }
 
-        private static readonly Unit _unit;
 
-        public static Unit unit => _unit;
+        // ********************** Funktor *************************************
+
+        public static Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
+        {
+            return pos => parser(pos).Map(map);
+        }
+
+        public static Parser<TRes> Const<T, TRes>(this Parser<T> parser, TRes constVal)
+        {
+            return parser.Map(_ => constVal);
+        }
+
+        // ************************ Monade ************************************
+
+        public static Parser<TRes> Bind<T, TRes>(this Parser<T> parser, Func<T, Parser<TRes>> bind)
+        {
+            return pos => parser(pos)
+                .Match(
+                    (v, p) => bind(v)(p),
+                    ParserResult<TRes>.Failed
+                );
+        }
+
+        public static Parser<TRes> SelectMany<TSrc, TRes>(this Parser<TSrc> source, Func<TSrc, Parser<TRes>> selector)
+        {
+            return source.Bind(selector);
+        }
+
+        public static Parser<TRes> SelectMany<TSrc, TCol, TRes>(this Parser<TSrc> source,
+            Func<TSrc, Parser<TCol>> collectionSelector, Func<TSrc, TCol, TRes> resultSelector)
+        {
+            return pos => source(pos)
+                .Match(
+                    (src, p) => collectionSelector(src)(p).Map(col => resultSelector(src, col))
+                    , ParserResult<TRes>.Failed);
+
+        }
+
+        // ******************************* Applikative ************************
+
+        public static Parser<TRes> Apply<T, TRes>(this Parser<Func<T, TRes>> fParser, Parser<T> valueParser)
+        {
+            return fParser.Bind(valueParser.Map);
+        }
+
     }
 }

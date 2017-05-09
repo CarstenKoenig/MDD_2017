@@ -1,5 +1,3 @@
-using System;
-
 namespace ParserKombinatoren
 {
     public class ParserPosition

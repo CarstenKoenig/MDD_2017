@@ -3,10 +3,9 @@ using ParserKombinatoren.Taschenrechner;
 
 namespace ParserKombinatoren.Console
 {
-
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             var eingaeParser =
                 from e in Syntax.Expression

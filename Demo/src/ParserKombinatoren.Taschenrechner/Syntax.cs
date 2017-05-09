@@ -45,11 +45,11 @@ namespace ParserKombinatoren.Taschenrechner
         {
             get
             {
-                Func<int,int,int> mul = (x,y) => x*y;
+                Func<int,int,int> mul = (x,y) => x * y;
                 Func<int,int,int> div = (x,y) => x/y;
                 return Choice(
-                        Tokens.Symbol('*').Const<char, Func<int, int, int>>(mul),
-                        Tokens.Symbol('/').Const<char, Func<int, int, int>>(div)
+                        Tokens.Symbol('*').Const(mul),
+                        Tokens.Symbol('/').Const(div)
                     ).ErrorText("* oder / erwartet");
             }
         }
