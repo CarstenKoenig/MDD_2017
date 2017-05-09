@@ -16,7 +16,10 @@
 <br />
 <br />
 
-Carsten König - [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
+Carsten König 
+
+- [@CarstenK_dev](http://www.twitter.com/carstenk_dev)
+- Github [github.com/CarstenKoenig/MDD_2017](https://github.com/CarstenKoenig/MDD_2017)
 
 ***
 
