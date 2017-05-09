@@ -52,14 +52,15 @@ namespace ParserKombinatoren
                     (err, p) => throw new Exception(err));
         }
 
-        public static TRes TryParse<T, TRes>(this Parser<T> parser, string text, Func<T, TRes> onSuccess,
+        public static TRes TryParse<T, TRes>(
+            this Parser<T> parser, string text, 
+            Func<T, TRes> onSuccess,
             Func<string, ParserPosition, TRes> onError)
         {
-            return
-                parser(ParserPosition.StarteMit(text))
-                    .Match(
-                        (v, _) => onSuccess(v),
-                        onError);
+            var start = ParserPosition.StarteMit(text);
+            var result = parser(start);
+            return 
+                result.Match((v, _) => onSuccess(v), onError);
         }
 
         public static void TryParse<T>(this Parser<T> parser, string text, Action<T> onSuccess,
@@ -88,6 +89,7 @@ namespace ParserKombinatoren
             return pos => ParserResult<T>.Succeed(value, pos);
         }
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
         {
             return pos => parser(pos).Map(map);
@@ -98,6 +100,7 @@ namespace ParserKombinatoren
             return parser.Map(_ => constVal);
         }
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<TRes> Bind<T, TRes>(this Parser<T> parser, Func<T, Parser<TRes>> bind)
         {
             return pos => parser(pos)
@@ -107,11 +110,13 @@ namespace ParserKombinatoren
                 );
         }
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<TRes> SelectMany<TSrc, TRes>(this Parser<TSrc> source, Func<TSrc, Parser<TRes>> selector)
         {
             return source.Bind(selector);
         }
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<TRes> SelectMany<TSrc, TCol, TRes>(this Parser<TSrc> source,
             Func<TSrc, Parser<TCol>> collectionSelector, Func<TSrc, TCol, TRes> resultSelector)
         {
@@ -122,12 +127,14 @@ namespace ParserKombinatoren
 
         }
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<TRes> Apply<T, TRes>(this Parser<Func<T, TRes>> fParser, Parser<T> valueParser)
         {
             return fParser.Bind(valueParser.Map);
         }
 
 
+        [System.Diagnostics.DebuggerNonUserCodeAttribute]
         public static Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
         {
             return pos => parserA(pos)
@@ -144,9 +151,10 @@ namespace ParserKombinatoren
 
         public static Parser<IEnumerable<T>> Many1<T>(this Parser<T> parser)
         {
-            return parser.Bind(item =>
-                Many(parser)
-                    .Map(items => new[] {item}.Concat(items)));
+            return 
+                from item in parser
+                from items in Many(parser)
+                select new[] {item}.Concat(items);
         }
 
         public static Parser<T> Chainl1<T>(this Parser<T> elemParser, Parser<Func<T, T, T>> opParser)

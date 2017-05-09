@@ -18,7 +18,7 @@ namespace ParserKombinatoren.Taschenrechner
     {
         public static Parser<int> Expression => 
             Term.Chainl1(AddOp)
-            .TrimLeft();
+            .IgnoreWhitespaceLeft();
 
 
         private static Parser<int> Term => 
@@ -45,9 +45,11 @@ namespace ParserKombinatoren.Taschenrechner
         {
             get
             {
+                Func<int,int,int> mul = (x,y) => x*y;
+                Func<int,int,int> div = (x,y) => x/y;
                 return Choice(
-                        Tokens.Symbol('*').Const<char, Func<int, int, int>>((x, y) => x * y),
-                        Tokens.Symbol('/').Const<char, Func<int, int, int>>((x, y) => x / y)
+                        Tokens.Symbol('*').Const<char, Func<int, int, int>>(mul),
+                        Tokens.Symbol('/').Const<char, Func<int, int, int>>(div)
                     ).ErrorText("* oder / erwartet");
             }
         }

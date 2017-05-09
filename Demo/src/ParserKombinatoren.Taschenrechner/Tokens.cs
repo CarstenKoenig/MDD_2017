@@ -8,7 +8,7 @@ namespace ParserKombinatoren.Taschenrechner
         {
             return Parsers
                 .Satisfy(c => symbol == c)
-                .TrimRight()
+                .IgnoreWhitespaceRight()
                 .ErrorText($"{symbol} erwartet");
         }
 
@@ -18,8 +18,8 @@ namespace ParserKombinatoren.Taschenrechner
             {
                 var sign = Parsers
                     .Choice(
-                    Symbol('-').Const<char, Func<int, int>>(x => -x),
-                    Parsers.Return<Func<int, int>>(x => x))
+                        Symbol('-').Const<char, Func<int, int>>(x => -x),
+                        Parsers.Return<Func<int, int>>(x => x))
                     .ErrorText("- oder Ziffer erwartet");
 
                 var digits = Parsers
@@ -29,7 +29,7 @@ namespace ParserKombinatoren.Taschenrechner
                     .Map(int.Parse)
                     .ErrorText("Ziffer erwartet");
 
-                return sign.Apply(digits).TrimRight();
+                return sign.Apply(digits).IgnoreWhitespaceRight();
             }
         }
     }

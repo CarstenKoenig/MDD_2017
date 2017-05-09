@@ -9,7 +9,7 @@ namespace ParserKombinatoren
         private static readonly Parser<string> _whitespace =
             Parsers.Satisfy(char.IsWhiteSpace).Many().Map(ToString);
 
-        public static Parser<T> TrimRight<T>(this Parser<T> parser)
+        public static Parser<T> IgnoreWhitespaceRight<T>(this Parser<T> parser)
         {
             return
                 from p in parser
@@ -17,7 +17,7 @@ namespace ParserKombinatoren
                 select p;
         }
 
-        public static Parser<T> TrimLeft<T>(this Parser<T> parser)
+        public static Parser<T> IgnoreWhitespaceLeft<T>(this Parser<T> parser)
         {
             return
                 from s in _whitespace
