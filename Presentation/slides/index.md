@@ -23,22 +23,13 @@ Carsten König
 
 ***
 
-## Agenda
-
-- Funktionales C#
-- Was sind Parser
-- *funktionale* Parser-Kombinatoren in C#
-- Beispiel Taschenrechner `2 * 3 + 4` -> `= 10`
-
-' Speakernotes here please
-
-***
-
-## Funktionales in C#
+## Funktionale Programmierung in C#
 
 - C# *war* schon immer eine funktionale Sprache
 - funktionale Aspekte werden *ständig* ausgebaut
 
+' möchte funktionale Ideen verbreiten
+' nicht nur der Hammer in der Toolbox
 
 ---
 
@@ -84,6 +75,10 @@ Arith plus = Impl.Plus;
 
 ***
 
+' anstatt langweilig Begriffe runterzukauen
+' schauen wir uns das an einesm schönen
+' Beispiel aus der FP Praxis an
+
 # Parser
 
 ---
@@ -101,17 +96,16 @@ Eingabe: **Quelltext**
 
 Ausgabe: **Syntaxbaum**
 
----
-
-### von
-
-> 2 * 3 + 4
+' das klassische Beispiel
 
 ---
 
 ### 2 * 3 + 4
 
 ![Syntaxbaum](./images/SyntaxBaum.png)
+
+' Blätter heißen Token
+' wie kann man sowas schreiben?
 
 ---
 
@@ -139,11 +133,14 @@ void expression(void) {
 }
 ```
 
+' geht gut für sogenannte LL1 Grammatiken
+' LL1 = Lookahad 1 - Leftreduktion
+
 ---
 
 ## Compiler-Compiler (Grammatik)
 
-übersetzen ein Grammatik wie
+übersetzen eine Eingabe-Grammatik wie
 
 ```text
 expr   ::= expr addop term | term
@@ -153,7 +150,7 @@ addop  ::= + | -
 mulop  ::= * | /
 ```
 
-in eine *state-machine* in der *Zielsprache*
+direkt in die *Zielsprache*
 
 ---
 
@@ -162,21 +159,22 @@ in eine *state-machine* in der *Zielsprache*
 - [YACC](https://de.wikipedia.org/wiki/Yacc) 
 - [ANTLR](https://de.wikipedia.org/wiki/ANTLR)
 
+' die Parser die wir uns anschauen wollen
+' liegen irgendwo dazwischen
+
 ***
 
-## funktionaler Parser
-
-> Umsetzung als *parser combinator* Bibliothek
-
----
-
-## funktionaler Parser
+## Parser Combinators
 
 ### Kombinator?
 
 ![Lego](images/Lego.png)
 
 *Funktionen* die *Parser* zu neuen *Parser*n zusammensetzen
+
+' wir definieren einfache Parser-Bausteine
+' und Kombinatoren um aus einfachen - komplexere Parser zu machen
+' ziemlich typisch für FP
 
 ---
 
@@ -508,48 +506,6 @@ Parser<char> Satisfy(Func<char, bool> property)
 
 ---
 
-## Entweder-Oder Kombinator
-
-**Idee:** versuche einen Parser, falls dieser
-erfolgreich ist verwende dessen Ergebnis
-
-**sonst** benutze einen *alternativen* Parser (hier *backtracking*)
-
----
-
-### A ist erfolgreich
-
-![Choice A](images/ChoiceParserA.png)
-
----
-
-### B ist erfolgreich
-
-![Choice B](images/ChoiceParserB.png)
-
----
-
-### beide scheitern
-
-![Choice C](images/ChoiceParserC.png)
-
----
-
-### Implementation
-
-```csharp
-Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
-{
-    return pos => 
-	    parserA(pos).Match(
-            onSuccess: ParserResult<T>.Succeed,
-            onFailure: (err, _) => parserB(pos));
-}
-
-```
-
-***
-
 ## Funktor
 
 **erbt** die Funktor-Eigenschaft von `ParserResult`
@@ -586,6 +542,47 @@ Parser<TRes> Map<T, TRes>(this Parser<T> parser, Func<T, TRes> map)
 Func<T,Tb> Map<T,Ta,Tb>(Func<T,Ta> f, Func<Ta,Tb> map)
 {
     return t => map( f(t) );
+}
+
+```
+---
+
+## Entweder-Oder Kombinator
+
+**Idee:** versuche einen Parser, falls dieser
+erfolgreich ist verwende dessen Ergebnis
+
+**sonst** benutze einen *alternativen* Parser (hier *backtracking*)
+
+---
+
+### A ist erfolgreich
+
+![Choice A](images/ChoiceParserA.png)
+
+---
+
+### B ist erfolgreich
+
+![Choice B](images/ChoiceParserB.png)
+
+---
+
+### beide scheitern
+
+![Choice C](images/ChoiceParserC.png)
+
+---
+
+### Implementation
+
+```csharp
+Parser<T> Choice<T>(Parser<T> parserA, Parser<T> parserB)
+{
+    return pos => 
+	    parserA(pos).Match(
+            onSuccess: ParserResult<T>.Succeed,
+            onFailure: (err, _) => parserB(pos));
 }
 
 ```
@@ -635,8 +632,8 @@ ParserPosition pos =>
 
 ```csharp
 Parser<TRes> Bind<T, TRes>( 
-       this Parser<T> parser, Func<T, 
-       Parser<TRes>> bind)
+       this Parser<T> parser, 
+       Func<T, Parser<TRes>> bind)
 {
     return pos => parser(pos)
         .Match(
