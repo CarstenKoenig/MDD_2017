@@ -18,4 +18,5 @@ OO-Tellerrand hinaus blicken.
 
 ---
 
-das [Demoprojekt finden Sie hier](/Demo)
+- die [Slides sind hier](./slides.pdf)
+- das [Demoprojekt finden Sie hier](/Demo)
